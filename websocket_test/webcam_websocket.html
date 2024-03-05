@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebCam Streaming</title>
+</head>
+<body>
+
+<video id="webcam" width="640" height="480" autoplay></video>
+<button id="startBtn">Start</button>
+<button id="endBtn">End</button>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const webcam = document.getElementById('webcam');
+  const startBtn = document.getElementById('startBtn');
+  const endBtn = document.getElementById('endBtn');
+  let isStreaming = false;
+
+  // 웹캠 스트림 가져오기
+navigator.mediaDevices.getUserMedia({ video: { width: 1920, height: 1080 } })
+    .then((stream) => {
+        webcam.srcObject = stream;
+    })
+    .catch((error) => {
+        console.error('Error accessing webcam:', error);
+    });
+
+  // WebSocket 연결
+  const socket = new WebSocket('ws://161.122.115.215:8000/ws');
+
+  // start 버튼 클릭 시 이미지 전송 시작
+  startBtn.addEventListener('click', () => {
+    if (!isStreaming) {
+      isStreaming = true;
+      sendWebcamImage();
+    }
+  });
+
+  // end 버튼 클릭 시 이미지 전송 중지
+  endBtn.addEventListener('click', () => {
+    if (isStreaming) {
+      isStreaming = false;
+    }
+  });
+
+    // 현재 시간을 문자열로 반환하는 함수
+  function getCurrentTimestamp() {
+    const date = new Date();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const milliseconds = String(date.getMilliseconds());
+    return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+  }
+  
+  // 이미지를 주기적으로 전송하는 함수
+  function sendWebcamImage() {
+    if (isStreaming) {
+      const canvas = document.createElement('canvas');
+      canvas.width = webcam.videoWidth;
+      canvas.height = webcam.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL('image/jpeg', 1);
+      const data = JSON.stringify({image: imageData, timestamp: getCurrentTimestamp()});
+      socket.send(data);
+
+      // 주기적으로 이미지 전송 (1초마다)
+      setTimeout(sendWebcamImage, 100);
+    }
+  }
+});
+</script>
+
+</body>
+</html>
