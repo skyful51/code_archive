@@ -12,6 +12,7 @@
 <button id="endBtn">End</button>
 
 <script>
+var count = 0;
 document.addEventListener('DOMContentLoaded', () => {
   const webcam = document.getElementById('webcam');
   const startBtn = document.getElementById('startBtn');
@@ -65,7 +66,7 @@ navigator.mediaDevices.getUserMedia({ video: { width: 1920, height: 1080 } })
       ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
 
       const imageData = canvas.toDataURL('image/jpeg', 1);
-      const data = JSON.stringify({image: imageData, timestamp: getCurrentTimestamp()});
+      const data = JSON.stringify({image: imageData, timestamp: getCurrentTimestamp(), frame_id: count++});
       socket.send(data);
 
       // 주기적으로 이미지 전송 (1초마다)
