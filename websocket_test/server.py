@@ -10,6 +10,8 @@ from datetime import datetime
 import sys
 import json
 
+import ssl
+
 from loguru import logger
 logger.add("file.log", format="{message}", level="INFO")
 logger.info(f"client_time, server_time, host_ip, frame_id")
@@ -97,6 +99,9 @@ navigator.mediaDevices.getUserMedia({ video: { width: 1920, height: 1080 } })
 </html>
 """
 
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain("cert.pem", "key.pem")
+
 app = FastAPI()
 
 @app.get("/")
@@ -124,4 +129,4 @@ async def websocket_endpoint(request: Request, websocket: WebSocket):
         logger.info(f"{client_timestamp}, {server_timestamp}, {host_ip}, {frame_id}")
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=8000, ssl=ssl_context)
